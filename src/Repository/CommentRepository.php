@@ -31,6 +31,7 @@ class CommentRepository extends ServiceEntityRepository
             ->andWhere('c.conference = :conference')
             ->setParameter('conference', $conference)
             ->orderBy('c.createdAt', 'DESC')
+            ->setMaxResults(self::PAGINATOR_PER_PAGE)
             ->setFirstResult($offset)
             ->getQuery()
         ;
