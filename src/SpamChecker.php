@@ -37,7 +37,7 @@ class SpamChecker
         if ('discard' === ($headers['spamvalue'][0] ?? '')) {
             return 2;
         }
-
+        
         $content = $response->getContent();
         if (isset($headers['spamvalue'][0])) {
             throw new \RuntimeException(sprintf('Unable to check for spam: %s (%s).', $content, $headers['spamvalue'][0]));
