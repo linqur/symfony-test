@@ -34,4 +34,9 @@ final class Version20220301152741 extends AbstractMigration
         $this->addSql('DROP TABLE conference');
         $this->addSql('DROP TABLE messenger_messages');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
