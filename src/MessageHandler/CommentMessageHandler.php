@@ -58,9 +58,13 @@ class CommentMessageHandler implements MessageHandlerInterface
 
         if ($this->workflow->can($comment, 'accept')) {
             $score = $this->spamChecker->getSpamScore($comment, $message->getContext());
+            
             $transition = self::TRANSITION_VALUES[$score] ?? self::TRANSITION_VALUES['default'];
+
             $this->workflow->apply($comment, $transition);
             $this->entityManager->flush();
+
+            $this->bus->dispatch($message);
         } elseif ($this->workflow->can($comment, 'publish') || $this->workflow->can($comment, 'publish_ham')) {
             $this->mailer->send((new NotificationEmail())
                 ->subject('New Comment psted')
