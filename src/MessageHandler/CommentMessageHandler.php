@@ -2,6 +2,7 @@
 
 namespace App\MessageHandler;
 
+use App\ImageOptimizer;
 use App\Message\CommentMessage;
 use App\Repository\CommentRepository;
 use App\SpamChecker;
@@ -20,13 +21,16 @@ class CommentMessageHandler implements MessageHandlerInterface
         2 => 'reject_spam',
         'default' => 'accept',
     ];
+
     private $spamChecker;
     private $entityManager;
     private $commentRepository;
     private $bus;
+    private $imageOptimizer;
     private $workflow;
     private $mailer;
     private $adminEmail;
+    private $photoDir;
     private $logger;
 
     public function __construct(
@@ -34,9 +38,11 @@ class CommentMessageHandler implements MessageHandlerInterface
         SpamChecker $spamChecker, 
         CommentRepository $commentRepository,
         MessageBusInterface $bus,
+        ImageOptimizer $imageOptimizer,
         WorkflowInterface $commentStateMachine,
         MailerInterface $mailer,
         string $adminEmail,
+        string $photoDir,
         LoggerInterface $logger
     ) 
     {
@@ -44,9 +50,11 @@ class CommentMessageHandler implements MessageHandlerInterface
         $this->spamChecker = $spamChecker;
         $this->commentRepository = $commentRepository;
         $this->bus = $bus;
+        $this->imageOptimizer = $imageOptimizer;
         $this->workflow = $commentStateMachine;
         $this->mailer = $mailer;
         $this->adminEmail = $adminEmail;
+        $this->photoDir = $photoDir;
         $this->logger = $logger;
     }
 
@@ -73,6 +81,12 @@ class CommentMessageHandler implements MessageHandlerInterface
                 ->to($this->adminEmail)
                 ->context(['comment' => $comment])
             );
+        } elseif ($this->workflow->can($comment, 'optimize')) {
+            if ($comment->getPhotoFilename()) {
+                $this->imageOptimizer->resize($this->photoDir.'/'.$comment->getPhotoFilename());
+            }
+            $this->workflow->apply($comment, 'optimize');
+            $this->entityManager->flush();
         } elseif ($this->logger) {
             $this->logger->debug('Dropping comment message', ['comment' => $comment->getId(), 'state' => $comment->getState()]);
         }
