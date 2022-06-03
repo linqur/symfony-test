@@ -30,7 +30,7 @@ class CommentRepository extends ServiceEntityRepository
 
     public function countOldRejected(): int
     {
-        return $this->getOldRejectedQueryBuiler()->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
+        return $this->getOldRejectedQueryBuilder()->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
     }
 
     public function deleteOldRejected(): int
@@ -78,7 +78,7 @@ class CommentRepository extends ServiceEntityRepository
         }
     }
 
-    private function getOldRejectedQueryBuiler(): QueryBuilder
+    private function getOldRejectedQueryBuilder(): QueryBuilder
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.state = :state_rejected OR c.state = :state_spam')
