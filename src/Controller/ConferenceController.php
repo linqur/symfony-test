@@ -38,7 +38,7 @@ class ConferenceController extends AbstractController
             'conferences' => $conferenceRepository->findAll(),
         ]));
 
-        $response->setSharedMaxAge(100);
+        $response->setSharedMaxAge(10);
 
         return $response;
     }
@@ -50,7 +50,7 @@ class ConferenceController extends AbstractController
             'conferences' => $conferenceRepository->findAll(),
         ]));
 
-        $response->setSharedMaxAge(50);
+        $response->setSharedMaxAge(2);
 
         return $response;
     }
