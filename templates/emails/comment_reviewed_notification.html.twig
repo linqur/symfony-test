@@ -1,0 +1,10 @@
+{% extends '@email/default/notification/body.html.twig' %}
+
+{% block content %}
+    Здравствйте, {{ comment.author }}!<br /> 
+    Статус вашего комментария изменен на: <b>{% if comment.state in ['ready', 'published'] %}Опубликован{% else %}Отклонен{% endif %}</b>.<br/>
+    Ваш комментарий: 
+    <p>
+        {{ comment.text }}
+    </p>
+{% endblock %}
