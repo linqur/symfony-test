@@ -4,13 +4,17 @@ namespace App\Controller\Admin;
 
 use App\Entity\Comment;
 use App\Message\CommentMessage;
+use App\Notification\CommentReviewedNotification;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Notifier\NotifierInterface;
+use Symfony\Component\Notifier\Recipient\Recipient;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Workflow\Registry;
 use Twig\Environment;
@@ -21,20 +25,25 @@ class AdminController extends AbstractController
     private $twig;
     private $entityManager;
     private $bus;
+    private $notifier;
+    private $logger;
 
-    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus)
+    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus, NotifierInterface $notifier, LoggerInterface $logger)
     {
         $this->twig = $twig;
         $this->entityManager = $entityManager;
         $this->bus = $bus;
+        $this->notifier = $notifier;
+        $this->logger = $logger;
     }
 
     #[Route('/comment/review/{id}', name: 'review_comment')]
     public function reviewComment(Request $request, Comment $comment, Registry $registry): Response
     {
         $accepted = !$request->query->get('reject');
-
+        $this->notifier->send(new CommentReviewedNotification($comment), new Recipient($comment->getEmail()));
         $machine = $registry->get($comment);
+
         if ($machine->can($comment, 'publish')) {
             $transition = $accepted ? 'publish' : 'reject';
         } elseif ($machine->can($comment, 'publish_ham')) {
@@ -49,6 +58,8 @@ class AdminController extends AbstractController
         if ($accepted) {
             $this->bus->dispatch(new CommentMessage($comment->getId()));
         }
+
+        
 
         return new Response($this->twig->render('admin/review.html.twig', [
             'transition' => $transition,
